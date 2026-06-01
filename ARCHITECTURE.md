@@ -1,210 +1,456 @@
 # Sistema de Reservas de Teatro — Documentação de Arquitetura
 
-> Stack: Java 26 · Spring Boot · MySQL · Redis · Docker  
+> Stack: Java 26 · Spring Boot · Spring Security · JWT · MySQL · Redis · Docker  
 > Padrões: Arquitetura Hexagonal · Microsserviços · CQRS
 
 ---
 
 ## 1. Visão Geral
 
-O sistema é composto por **três microsserviços independentes**, cada um com seu próprio domínio bem delimitado, comunicando-se via API Gateway. Toda a lógica de negócio fica isolada no **Domain Core** (hexágono), protegida por Ports & Adapters. O CQRS separa operações de escrita (MySQL) de leitura (Redis), garantindo performance e escalabilidade.
+O sistema é composto por **quatro microsserviços independentes**, cada um com domínio bem delimitado, comunicando-se via API Gateway. A autenticação usa **JWT stateless**: o Gateway valida o token localmente em cada requisição e injeta `X-User-Id` e `X-User-Role` como headers internos, eliminando roundtrips ao Auth Service. O `userId` chega ao `Reservation Service` via header e é persistido automaticamente na tabela `booking`.
+
+```
+Client → [Bearer JWT] → API Gateway → [valida JWT + injeta X-User-Id] → Microsserviços
+```
 
 ---
 
 ## 2. Microsserviços
 
-### 2.1 Theater Service
+### 2.1 Auth Service (porta 8084) — NOVO
+Responsável pelo ciclo de vida de usuários e tokens.
+
+| Operação              | Endpoint                     | Auth? | Tipo    |
+|-----------------------|------------------------------|-------|---------|
+| Registrar usuário     | `POST /api/auth/register`    | Não   | Command |
+| Login                 | `POST /api/auth/login`       | Não   | Command |
+| Renovar token         | `POST /api/auth/refresh`     | Não   | Command |
+| Logout (revoga token) | `POST /api/auth/logout`      | Sim   | Command |
+| Dados do usuário      | `GET  /api/auth/me`          | Sim   | Query   |
+
+### 2.2 Theater Service (porta 8081)
 Responsável pelo cadastro e gerenciamento de teatros.
 
-| Operação | Endpoint | Tipo |
-|---|---|---|
-| Criar teatro | `POST /api/theaters` | Command |
-| Listar teatros | `GET /api/theaters` | Query |
-| Buscar por ID | `GET /api/theaters/{id}` | Query |
-| Atualizar | `PUT /api/theaters/{id}` | Command |
-| Remover | `DELETE /api/theaters/{id}` | Command |
+| Operação    | Endpoint                  | Role exigida | Tipo    |
+|-------------|---------------------------|--------------|---------|
+| Criar        | `POST /api/theaters`      | `ADMIN`      | Command |
+| Listar       | `GET  /api/theaters`      | Qualquer     | Query   |
+| Buscar por ID| `GET  /api/theaters/{id}` | Qualquer     | Query   |
+| Atualizar    | `PUT  /api/theaters/{id}` | `ADMIN`      | Command |
+| Remover      | `DELETE /api/theaters/{id}`| `ADMIN`     | Command |
 
-### 2.2 Event Service
-Gerencia eventos vinculados a teatros e controla o mapa de assentos.
+### 2.3 Event Service (porta 8082)
+Gerencia eventos e o mapa de assentos.
 
-| Operação | Endpoint | Tipo |
-|---|---|---|
-| Criar evento | `POST /api/events` | Command |
-| Listar por teatro | `GET /api/events?theaterId={id}` | Query |
-| Buscar por ID | `GET /api/events/{id}` | Query |
-| Mapa de assentos | `GET /api/events/{id}/seats` | Query |
-| Atualizar | `PUT /api/events/{id}` | Command |
-| Remover | `DELETE /api/events/{id}` | Command |
+| Operação        | Endpoint                      | Role exigida | Tipo    |
+|-----------------|-------------------------------|--------------|---------|
+| Criar evento    | `POST /api/events`            | `ADMIN`      | Command |
+| Listar          | `GET  /api/events`            | Qualquer     | Query   |
+| Buscar por ID   | `GET  /api/events/{id}`       | Qualquer     | Query   |
+| Mapa de assentos| `GET  /api/events/{id}/seats` | Qualquer     | Query   |
+| Atualizar       | `PUT  /api/events/{id}`       | `ADMIN`      | Command |
+| Remover         | `DELETE /api/events/{id}`     | `ADMIN`      | Command |
 
-### 2.3 Reservation Service
-Controla inscrições, reservas momentâneas (hold) e confirmações.
+### 2.4 Reservation Service (porta 8083)
+Controla reservas. O `userId` é extraído do header `X-User-Id` — nunca do body.
 
-| Operação | Endpoint | Tipo |
-|---|---|---|
-| Criar inscrição + reservar assentos | `POST /api/bookings` | Command |
-| Confirmar reserva | `PATCH /api/bookings/{id}/confirm` | Command |
-| Cancelar reserva | `PATCH /api/bookings/{id}/cancel` | Command |
-| Listar por evento | `GET /api/bookings?eventId={id}` | Query |
-| Buscar por ID | `GET /api/bookings/{id}` | Query |
-
----
-
-## 3. Arquitetura Hexagonal — Estrutura de Pastas
-
-```
-reservation-service/
-├── src/main/java/com/theater/reservation/
-│   ├── domain/                          # Hexágono — NÚCLEO
-│   │   ├── model/
-│   │   │   ├── Booking.java             # Entidade de domínio
-│   │   │   ├── Seat.java
-│   │   │   └── SeatStatus.java          # Enum: AVAILABLE, MOMENTARILY_RESERVED, RESERVED
-│   │   ├── port/
-│   │   │   ├── in/                      # Portas de entrada (Use Cases)
-│   │   │   │   ├── CreateBookingUseCase.java
-│   │   │   │   ├── ConfirmBookingUseCase.java
-│   │   │   │   └── GetBookingQuery.java
-│   │   │   └── out/                     # Portas de saída (SPI)
-│   │   │       ├── BookingRepository.java
-│   │   │       ├── SeatRepository.java
-│   │   │       └── BookingReadRepository.java
-│   │   └── service/                     # Casos de uso implementados
-│   │       ├── BookingCommandService.java
-│   │       └── BookingQueryService.java
-│   │
-│   ├── adapter/                         # Adaptadores — FORA DO HEXÁGONO
-│   │   ├── in/
-│   │   │   └── web/
-│   │   │       ├── ReservationController.java
-│   │   │       ├── request/
-│   │   │       │   └── CreateBookingRequest.java
-│   │   │       └── response/
-│   │   │           └── BookingResponse.java
-│   │   └── out/
-│   │       ├── persistence/
-│   │       │   ├── BookingJpaRepository.java
-│   │       │   ├── SeatJpaRepository.java
-│   │       │   └── BookingPersistenceAdapter.java
-│   │       └── cache/
-│   │           ├── BookingRedisRepository.java
-│   │           └── BookingCacheAdapter.java
-│   │
-│   └── infrastructure/
-│       ├── config/
-│       │   ├── RedisConfig.java
-│       │   └── SwaggerConfig.java
-│       └── event/
-│           └── SeatStatusEventListener.java
-```
-
-> A mesma estrutura se aplica aos demais microsserviços (`theater-service`, `event-service`).
+| Operação                      | Endpoint                        | Role exigida | Tipo    |
+|-------------------------------|---------------------------------|--------------|---------|
+| Criar reserva (hold + booking)| `POST /api/bookings`            | `CUSTOMER`   | Command |
+| Confirmar reserva             | `PATCH /api/bookings/{id}/confirm`| `CUSTOMER` | Command |
+| Cancelar reserva              | `PATCH /api/bookings/{id}/cancel` | `CUSTOMER` | Command |
+| Listar minhas reservas        | `GET  /api/bookings/me`         | `CUSTOMER`   | Query   |
+| Listar por evento (admin)     | `GET  /api/bookings?eventId=`   | `ADMIN`      | Query   |
 
 ---
 
-## 4. CQRS — Separação de Comandos e Consultas
+## 3. Auth Service — Implementação
 
-### Command Side (Escrita → MySQL)
+### 3.1 Estrutura hexagonal do Auth Service
+
+```
+auth-service/
+└── src/main/java/com/theater/auth/
+    ├── domain/
+    │   ├── model/
+    │   │   ├── User.java                 # Entidade de domínio
+    │   │   └── UserRole.java             # Enum: ADMIN, CUSTOMER
+    │   ├── port/
+    │   │   ├── in/
+    │   │   │   ├── RegisterUserUseCase.java
+    │   │   │   ├── LoginUseCase.java
+    │   │   │   └── RefreshTokenUseCase.java
+    │   │   └── out/
+    │   │       ├── UserRepository.java
+    │   │       └── TokenRepository.java   # Refresh tokens no Redis
+    │   └── service/
+    │       ├── AuthCommandService.java
+    │       └── TokenService.java
+    ├── adapter/
+    │   ├── in/web/
+    │   │   ├── AuthController.java
+    │   │   ├── request/
+    │   │   │   ├── RegisterRequest.java
+    │   │   │   └── LoginRequest.java
+    │   │   └── response/
+    │   │       └── AuthResponse.java
+    │   └── out/
+    │       ├── persistence/
+    │       │   └── UserJpaRepository.java
+    │       └── cache/
+    │           └── RefreshTokenRedisAdapter.java
+    └── infrastructure/
+        ├── security/
+        │   ├── JwtUtil.java              # Emissão e validação do JWT
+        │   └── SecurityConfig.java
+        └── config/
+            └── PasswordConfig.java       # Bean BCryptPasswordEncoder
+```
+
+### 3.2 Dependências (pom.xml do auth-service)
+
+```xml
+<!-- Spring Security -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+
+<!-- JWT (JJWT) -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-api</artifactId>
+    <version>0.12.6</version>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-impl</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+
+<!-- Redis para refresh tokens -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+```
+
+### 3.3 Domínio — Entidade User
 
 ```java
-// Porta de entrada para comandos
-public interface CreateBookingUseCase {
-    BookingId createBooking(CreateBookingCommand command);
+@Entity
+@Table(name = "user")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role = UserRole.CUSTOMER;
+
+    @Column(nullable = false)
+    private boolean active = true;
+
+    // factory method — senha já deve chegar hasheada
+    public static User create(String name, String email,
+                              String passwordHash, UserRole role) {
+        User u = new User();
+        u.name         = name;
+        u.email        = email;
+        u.passwordHash = passwordHash;
+        u.role         = role;
+        return u;
+    }
 }
 
-// Comando imutável
-public record CreateBookingCommand(
-    Long eventId,
-    String subscriberName,
-    String subscriberEmail,
-    String subscriberPhone,
-    List<Long> seatIds
-) {}
+public enum UserRole { ADMIN, CUSTOMER }
+```
 
-// Handler (service de domínio)
+### 3.4 JwtUtil — Emissão e validação
+
+```java
+@Component
+public class JwtUtil {
+
+    // Chave lida de application.properties: jwt.secret (mínimo 256 bits)
+    @Value("${jwt.secret}")
+    private String secret;
+
+    private static final Duration ACCESS_TTL  = Duration.ofMinutes(15);
+    private static final Duration REFRESH_TTL = Duration.ofDays(7);
+
+    public String generateAccessToken(User user) {
+        return Jwts.builder()
+            .subject(user.getId().toString())
+            .claim("role", user.getRole().name())
+            .claim("email", user.getEmail())
+            .issuedAt(new Date())
+            .expiration(Date.from(Instant.now().plus(ACCESS_TTL)))
+            .signWith(getKey())
+            .compact();
+    }
+
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+            .subject(user.getId().toString())
+            .claim("type", "refresh")
+            .issuedAt(new Date())
+            .expiration(Date.from(Instant.now().plus(REFRESH_TTL)))
+            .signWith(getKey())
+            .compact();
+    }
+
+    // Retorna o userId extraído do token; lança JwtException se inválido
+    public Long extractUserId(String token) {
+        return Long.parseLong(
+            Jwts.parser().verifyWith(getKey()).build()
+                .parseSignedClaims(token).getPayload().getSubject()
+        );
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parser().verifyWith(getKey()).build()
+            .parseSignedClaims(token).getPayload();
+    }
+
+    private SecretKey getKey() {
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+    }
+}
+```
+
+### 3.5 AuthCommandService — Login
+
+```java
 @Service
 @Transactional
-public class BookingCommandService implements CreateBookingUseCase {
+public class AuthCommandService implements LoginUseCase, RegisterUserUseCase {
 
-    private final BookingRepository bookingRepository;
-    private final SeatRepository seatRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final UserRepository userRepository;
+    private final TokenRepository tokenRepository;   // Redis
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Override
-    public BookingId createBooking(CreateBookingCommand cmd) {
-        // 1. Validar assentos (apenas AVAILABLE)
-        List<Seat> seats = seatRepository.findAllById(cmd.seatIds());
-        seats.forEach(seat -> {
-            if (seat.getStatus() != SeatStatus.AVAILABLE) {
-                throw new SeatNotAvailableException(seat.getId());
-            }
-        });
+    public AuthResponse login(LoginCommand cmd) {
+        User user = userRepository.findByEmail(cmd.email())
+            .orElseThrow(() -> new InvalidCredentialsException());
 
-        // 2. Marcar como MOMENTARILY_RESERVED (M)
-        seats.forEach(seat -> seat.holdFor(Duration.ofMinutes(10)));
-        seatRepository.saveAll(seats);
+        if (!user.isActive())
+            throw new UserInactiveException();
 
-        // 3. Criar booking
-        Booking booking = Booking.create(cmd.eventId(), cmd.subscriberName(),
-                                         cmd.subscriberEmail(), cmd.subscriberPhone(), seats);
-        Booking saved = bookingRepository.save(booking);
+        if (!passwordEncoder.matches(cmd.password(), user.getPasswordHash()))
+            throw new InvalidCredentialsException();
 
-        // 4. Publicar evento de domínio → sincronizar Redis
-        eventPublisher.publishEvent(new BookingCreatedEvent(saved));
+        String accessToken  = jwtUtil.generateAccessToken(user);
+        String refreshToken = jwtUtil.generateRefreshToken(user);
 
-        return saved.getId();
+        // Persiste refresh token no Redis com TTL de 7 dias
+        tokenRepository.save(
+            RefreshToken.of(user.getId(), refreshToken, Duration.ofDays(7))
+        );
+
+        return new AuthResponse(accessToken, refreshToken, user.getId(), user.getRole());
     }
-}
-```
-
-### Query Side (Leitura → Redis)
-
-```java
-// Projeção otimizada para leitura
-public record SeatMapProjection(
-    Long eventId,
-    String eventName,
-    List<SeatView> seats
-) {}
-
-public record SeatView(Long id, String code, SeatStatus status) {}
-
-// Query handler
-@Service
-public class EventQueryService implements GetSeatMapQuery {
-
-    private final BookingReadRepository redisReadRepo;
-    private final EventJpaRepository fallbackRepo; // fallback se cache miss
 
     @Override
-    public SeatMapProjection getSeatMap(Long eventId) {
-        return redisReadRepo.findSeatMap(eventId)
-            .orElseGet(() -> {
-                // Cache miss: vai ao MySQL e repopula Redis
-                SeatMapProjection projection = fallbackRepo.buildSeatMap(eventId);
-                redisReadRepo.cacheSeatMap(eventId, projection);
-                return projection;
-            });
+    public void register(RegisterCommand cmd) {
+        if (userRepository.existsByEmail(cmd.email()))
+            throw new EmailAlreadyUsedException(cmd.email());
+
+        String hash = passwordEncoder.encode(cmd.password());
+        User user = User.create(cmd.name(), cmd.email(), hash, UserRole.CUSTOMER);
+        userRepository.save(user);
     }
 }
 ```
 
 ---
 
-## 5. Banco de Dados
+## 4. API Gateway — Filtro JWT
 
-### 5.1 MySQL — Schema (Write Model)
+O Gateway **não chama o Auth Service** para validar tokens. Ele usa a mesma chave secreta (`jwt.secret`) para validar a assinatura localmente — zero latência extra por requisição.
+
+```java
+@Component
+public class JwtGatewayFilter implements GlobalFilter, Ordered {
+
+    private final JwtUtil jwtUtil;
+
+    // Rotas públicas — não passam pelo filtro
+    private static final Set<String> PUBLIC_PATHS = Set.of(
+        "/api/auth/login",
+        "/api/auth/register",
+        "/api/auth/refresh"
+    );
+
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        String path = exchange.getRequest().getPath().value();
+
+        if (PUBLIC_PATHS.stream().anyMatch(path::startsWith)) {
+            return chain.filter(exchange);
+        }
+
+        String authHeader = exchange.getRequest()
+            .getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return unauthorized(exchange);
+        }
+
+        try {
+            String token  = authHeader.substring(7);
+            Claims claims = jwtUtil.extractAllClaims(token);
+            String userId = claims.getSubject();
+            String role   = claims.get("role", String.class);
+
+            // Injeta headers internos para os microsserviços downstream
+            ServerHttpRequest mutated = exchange.getRequest().mutate()
+                .header("X-User-Id",   userId)
+                .header("X-User-Role", role)
+                .build();
+
+            return chain.filter(exchange.mutate().request(mutated).build());
+
+        } catch (JwtException e) {
+            return unauthorized(exchange);
+        }
+    }
+
+    private Mono<Void> unauthorized(ServerWebExchange exchange) {
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        return exchange.getResponse().setComplete();
+    }
+
+    @Override public int getOrder() { return -100; }
+}
+```
+
+### Roteamento no application.yml do Gateway
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://auth-service:8084
+          predicates: [Path=/api/auth/**]
+
+        - id: theater-service
+          uri: http://theater-service:8081
+          predicates: [Path=/api/theaters/**]
+          filters:
+            - name: RequestRateLimiter
+              args: { redis-rate-limiter.replenishRate: 50, redis-rate-limiter.burstCapacity: 100 }
+
+        - id: event-service
+          uri: http://event-service:8082
+          predicates: [Path=/api/events/**]
+
+        - id: reservation-service
+          uri: http://reservation-service:8083
+          predicates: [Path=/api/bookings/**]
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET}   # variável de ambiente obrigatória
+```
+
+---
+
+## 5. Reservation Service — userId via Header
+
+O `userId` **nunca** é enviado pelo cliente no body da requisição. Ele é extraído do header `X-User-Id` que o Gateway injetou após validar o JWT.
+
+```java
+// Adaptador de entrada — extrai userId do header
+@RestController
+@RequestMapping("/api/bookings")
+public class ReservationController {
+
+    private final CreateBookingUseCase createBookingUseCase;
+
+    @PostMapping
+    public ResponseEntity<BookingResponse> create(
+        @RequestBody CreateBookingRequest req,
+        @RequestHeader("X-User-Id") Long userId,          // injetado pelo Gateway
+        @RequestHeader("X-User-Role") String role
+    ) {
+        CreateBookingCommand cmd = new CreateBookingCommand(
+            req.eventId(),
+            req.seatIds(),
+            userId                                         // vem do JWT, não do body
+        );
+        BookingId id = createBookingUseCase.createBooking(cmd);
+        return ResponseEntity.created(URI.create("/api/bookings/" + id.value())).build();
+    }
+}
+
+// Comando atualizado com userId
+public record CreateBookingCommand(
+    Long eventId,
+    List<Long> seatIds,
+    Long userId           // antes: subscriberName/email/phone — agora vêm do User
+) {}
+```
+
+> **Nota:** Com o sistema de login, `subscriber_name`, `subscriber_email` e `subscriber_phone` são removidos do body do booking — esses dados já existem no `user`. O `booking` armazena apenas `user_id`, `event_id`, `status` e as datas.
+
+---
+
+## 6. Banco de Dados — Schema Completo Atualizado
 
 ```sql
-CREATE TABLE theater (
-    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name         VARCHAR(255) NOT NULL,
-    address      VARCHAR(500),
-    city         VARCHAR(100),
-    capacity     INT NOT NULL,
-    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+-- ─────────────────────────────────────────────────────────
+-- TABELA: user (gerenciada pelo Auth Service)
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE user (
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name          VARCHAR(255) NOT NULL,
+    email         VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role          ENUM('ADMIN', 'CUSTOMER') NOT NULL DEFAULT 'CUSTOMER',
+    active        BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- ─────────────────────────────────────────────────────────
+-- TABELA: theater
+-- ─────────────────────────────────────────────────────────
+CREATE TABLE theater (
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(255) NOT NULL,
+    address     VARCHAR(500),
+    city        VARCHAR(100),
+    capacity    INT NOT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ─────────────────────────────────────────────────────────
+-- TABELA: event (FK → theater)
+-- ─────────────────────────────────────────────────────────
 CREATE TABLE event (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     theater_id       BIGINT NOT NULL,
@@ -218,29 +464,37 @@ CREATE TABLE event (
     CONSTRAINT fk_event_theater FOREIGN KEY (theater_id) REFERENCES theater(id)
 );
 
+-- ─────────────────────────────────────────────────────────
+-- TABELA: seat (FK → event)
+-- ─────────────────────────────────────────────────────────
 CREATE TABLE seat (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
     event_id     BIGINT NOT NULL,
-    seat_code    VARCHAR(10) NOT NULL,   -- ex: "A1", "B12"
+    seat_code    VARCHAR(10) NOT NULL,
     status       ENUM('D','M','R') NOT NULL DEFAULT 'D',
     reserved_at  TIMESTAMP NULL,
-    expires_at   TIMESTAMP NULL,         -- para reservas momentâneas (M)
+    expires_at   TIMESTAMP NULL,
     CONSTRAINT fk_seat_event FOREIGN KEY (event_id) REFERENCES event(id),
     UNIQUE KEY uq_seat_per_event (event_id, seat_code)
 );
 
+-- ─────────────────────────────────────────────────────────
+-- TABELA: booking (FK → event + FK → user)
+-- ─────────────────────────────────────────────────────────
 CREATE TABLE booking (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    event_id         BIGINT NOT NULL,
-    subscriber_name  VARCHAR(255) NOT NULL,
-    subscriber_email VARCHAR(255) NOT NULL,
-    subscriber_phone VARCHAR(20),
-    status           ENUM('PENDING','CONFIRMED','CANCELLED') DEFAULT 'PENDING',
-    booked_at        TIMESTAMP NULL,
-    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_booking_event FOREIGN KEY (event_id) REFERENCES event(id)
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_id    BIGINT NOT NULL,
+    user_id     BIGINT NOT NULL,                      -- FK para user (quem reservou)
+    status      ENUM('PENDING','CONFIRMED','CANCELLED') DEFAULT 'PENDING',
+    booked_at   TIMESTAMP NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_booking_event FOREIGN KEY (event_id) REFERENCES event(id),
+    CONSTRAINT fk_booking_user  FOREIGN KEY (user_id)  REFERENCES user(id)
 );
 
+-- ─────────────────────────────────────────────────────────
+-- TABELA: booking_seat (associativa)
+-- ─────────────────────────────────────────────────────────
 CREATE TABLE booking_seat (
     booking_id  BIGINT NOT NULL,
     seat_id     BIGINT NOT NULL,
@@ -249,92 +503,75 @@ CREATE TABLE booking_seat (
     CONSTRAINT fk_bs_seat    FOREIGN KEY (seat_id)    REFERENCES seat(id)
 );
 
--- Índices de performance
-CREATE INDEX idx_event_theater  ON event(theater_id);
-CREATE INDEX idx_seat_event     ON seat(event_id);
-CREATE INDEX idx_seat_status    ON seat(event_id, status);
-CREATE INDEX idx_booking_event  ON booking(event_id);
-```
-
-### 5.2 Por que Redis como banco de leitura?
-
-Redis foi escolhido por:
-
-- **Latência sub-milissegundo** — leituras do mapa de assentos são frequentíssimas; Redis entrega em ~0.1ms vs ~5–20ms do MySQL
-- **Estruturas nativas** — `HASH` para projeções de eventos, `SET` para IDs de assentos disponíveis, `SORTED SET` para filas
-- **TTL nativo** — expiração automática das reservas momentâneas (M) sem cron job
-- **Pub/Sub** — notificações em tempo real para o front-end React via WebSocket/SSE
-- **Eventual consistency aceitável** — o delta de inconsistência é mínimo: o listener de eventos do Spring sincroniza Redis na mesma transação de negócio
-
-#### Estruturas Redis utilizadas
-
-```
-# Mapa completo de assentos de um evento (HASH)
-seat_map:{eventId}  →  { "A1": "D", "A2": "R", "B5": "M", ... }
-
-# Assentos disponíveis (SET — O(1) para verificação)
-available_seats:{eventId}  →  { "A1", "A3", "B2", ... }
-
-# Expiração de reservas momentâneas (KEY com TTL)
-hold_seat:{seatId}  →  "bookingId"   TTL: 600s (10 min)
-
-# Projeção do evento (STRING com JSON serializado)
-event_projection:{eventId}  →  { id, name, date, theaterName, availableSeats }
+-- ─────────────────────────────────────────────────────────
+-- ÍNDICES
+-- ─────────────────────────────────────────────────────────
+CREATE INDEX idx_event_theater ON event(theater_id);
+CREATE INDEX idx_seat_event    ON seat(event_id);
+CREATE INDEX idx_seat_status   ON seat(event_id, status);
+CREATE INDEX idx_booking_event ON booking(event_id);
+CREATE INDEX idx_booking_user  ON booking(user_id);     -- listagem "minhas reservas"
+CREATE INDEX idx_user_email    ON user(email);           -- login rápido
 ```
 
 ---
 
-## 6. Regras de Negócio dos Assentos
+## 7. Redis — Estruturas atualizadas com Auth
 
-| Status | Código | Transições permitidas |
-|---|---|---|
-| Disponível | `D` | → `M` (hold), → `R` (direto, fluxo admin) |
-| Reservado Momentaneamente | `M` | → `R` (confirmação), → `D` (expiração TTL) |
-| Reservado | `R` | → `D` (cancelamento) |
+```
+# Refresh tokens (TTL 7 dias — invalidados no logout)
+refresh_token:{userId}  →  "<token_string>"   TTL: 604800s
 
-**Regras críticas:**
-- Máximo de 80 assentos por evento (`CHECK` no banco + validação de domínio)
-- Uma pessoa pode reservar múltiplos assentos num único booking, desde que estejam com status `D`
-- Reservas `M` expiram automaticamente em 10 minutos via TTL do Redis + job de reconciliação no MySQL
-- Dois usuários não podem reservar o mesmo assento: controle via `SELECT FOR UPDATE` no MySQL (pessimistic lock) durante o command
+# Mapa de assentos por evento
+seat_map:{eventId}  →  HASH { "A1": "D", "A2": "R", ... }
 
-```java
-// Exemplo de pessimistic lock no repository
-@Lock(LockModeType.PESSIMISTIC_WRITE)
-@Query("SELECT s FROM Seat s WHERE s.id IN :ids")
-List<Seat> findAllByIdWithLock(@Param("ids") List<Long> ids);
+# Assentos disponíveis (lookup O(1))
+available_seats:{eventId}  →  SET { "A1", "A3", ... }
+
+# Hold temporário de assento (TTL 10 min)
+hold_seat:{seatId}  →  "<bookingId>"   TTL: 600s
+
+# Projeção de evento para leitura
+event_projection:{eventId}  →  JSON serializado
 ```
 
----
-
-## 7. Expiração de Reservas Momentâneas
-
-A expiração usa dois mecanismos complementares:
-
-1. **Redis TTL** — `hold_seat:{seatId}` expira em 600s; um `KeyExpirationEventMessageListener` do Spring captura o evento e publica uma mensagem interna para reverter o assento para `D` no MySQL.
-
-2. **Job de reconciliação** (fallback) — `@Scheduled` a cada 5 minutos verifica assentos com `status = 'M'` e `expires_at < NOW()` e os reverte para `D`. Garante consistência mesmo em caso de falha do listener Redis.
+**Logout** revoga o refresh token simplesmente deletando a chave no Redis:
 
 ```java
-@Component
-public class SeatExpirationJob {
-
-    private final SeatRepository seatRepository;
-
-    @Scheduled(fixedDelay = 300_000) // 5 minutos
-    @Transactional
-    public void expireHeldSeats() {
-        List<Seat> expired = seatRepository
-            .findByStatusAndExpiresAtBefore(SeatStatus.MOMENTARILY_RESERVED, Instant.now());
-        expired.forEach(Seat::release);
-        seatRepository.saveAll(expired);
-    }
+public void logout(Long userId) {
+    tokenRepository.deleteByUserId(userId); // DEL refresh_token:{userId}
 }
 ```
 
 ---
 
-## 8. Docker Compose
+## 8. Controle de Acesso por Role
+
+| Role       | Pode fazer                                          |
+|------------|-----------------------------------------------------|
+| `ADMIN`    | CRUD de teatros e eventos; listar todos os bookings |
+| `CUSTOMER` | Criar, confirmar e cancelar suas próprias reservas  |
+| Anônimo    | Listar teatros, eventos e mapa de assentos          |
+
+Verificação de posse da reserva no `BookingCommandService`:
+
+```java
+public void cancelBooking(Long bookingId, Long requestingUserId) {
+    Booking booking = bookingRepository.findById(bookingId)
+        .orElseThrow(BookingNotFoundException::new);
+
+    if (!booking.getUserId().equals(requestingUserId)) {
+        throw new ForbiddenException("Você não pode cancelar a reserva de outro usuário.");
+    }
+
+    booking.cancel();
+    bookingRepository.save(booking);
+}
+```
+
+---
+
+## 9. Docker Compose Atualizado
 
 ```yaml
 version: '3.9'
@@ -345,10 +582,21 @@ services:
     build: ./api-gateway
     ports: ["8080:8080"]
     environment:
-      THEATER_SERVICE_URL: http://theater-service:8081
-      EVENT_SERVICE_URL:   http://event-service:8082
+      JWT_SECRET: ${JWT_SECRET}
+      AUTH_SERVICE_URL:        http://auth-service:8084
+      THEATER_SERVICE_URL:     http://theater-service:8081
+      EVENT_SERVICE_URL:       http://event-service:8082
       RESERVATION_SERVICE_URL: http://reservation-service:8083
-    depends_on: [theater-service, event-service, reservation-service]
+    depends_on: [auth-service, theater-service, event-service, reservation-service]
+
+  auth-service:
+    build: ./auth-service
+    expose: ["8084"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
+      SPRING_REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on: [mysql, redis]
 
   theater-service:
     build: ./theater-service
@@ -386,7 +634,7 @@ services:
 
   redis:
     image: redis:7.2-alpine
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
     ports: ["6379:6379"]
     volumes:
       - redis_data:/data
@@ -396,109 +644,80 @@ volumes:
   redis_data:
 ```
 
----
+### .env (nunca commitar no git)
 
-## 9. Escalabilidade
-
-Para suportar grandes volumes de acesso:
-
-### Horizontal Scaling
-- Todos os microsserviços são **stateless** → múltiplas réplicas via Docker Swarm/Kubernetes
-- O API Gateway faz load balancing entre réplicas
-
-### Redis como escudo do MySQL
-- **>95% das leituras** são servidas pelo Redis — o MySQL fica protegido de leituras pesadas
-- Assentos disponíveis são lidos do Redis em O(1)
-
-### Controle de concorrência
-- `SELECT FOR UPDATE` no MySQL garante que dois usuários não reservem o mesmo assento simultaneamente
-- Para escala extrema, substituir por **Redis SETNX** (optimistic lock distribuído) ou **Kafka** para processar reservas em fila
-
-### Kafka (evolução futura)
-Quando a carga justificar, o `ApplicationEventPublisher` do Spring pode ser substituído por Kafka:
-- Produtor: `ReservationService` publica `BookingCreatedEvent`
-- Consumidor: `SeatProjectionConsumer` atualiza Redis assincronamente
-- Garante ordering por `eventId` como partition key
+```env
+JWT_SECRET=gera_aqui_uma_string_base64_de_256bits_minimo
+```
 
 ---
 
-## 10. Estrutura Multi-módulo Maven
+## 10. Estrutura Multi-módulo Maven Atualizada
 
 ```
 theater-reservation/
 ├── pom.xml                    (parent BOM)
-├── api-gateway/
-│   └── pom.xml
+├── api-gateway/               (Spring Cloud Gateway + filtro JWT)
+├── auth-service/              (Spring Security + JWT + BCrypt)
 ├── theater-service/
-│   └── pom.xml
 ├── event-service/
-│   └── pom.xml
 ├── reservation-service/
-│   └── pom.xml
-├── shared-domain/             (entidades e eventos compartilhados)
-│   └── pom.xml
+├── shared-domain/             (records de eventos de domínio compartilhados)
 └── docker-compose.yml
 ```
 
-### Dependências principais (pom.xml pai)
+### Dependências adicionais no parent pom.xml
 
 ```xml
-<properties>
-    <java.version>26</java.version>
-    <spring-boot.version>3.5.0</spring-boot.version>
-</properties>
+<!-- Spring Security (usado apenas no auth-service) -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
 
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-data-redis</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-gateway</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>com.mysql</groupId>
-        <artifactId>mysql-connector-j</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springdoc</groupId>
-        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-        <version>2.5.0</version>
-    </dependency>
-</dependencies>
+<!-- JJWT — compartilhado entre auth-service e api-gateway -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-api</artifactId>
+    <version>0.12.6</version>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-impl</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
 ```
 
 ---
 
 ## 11. Considerações para o Front-End React
 
-A API foi projetada para suportar o front-end com:
+Com o sistema de login, o React deve:
 
-- **CORS** configurado no API Gateway para `http://localhost:3000`
-- **Endpoint de seat map** retorna grid pronto para renderização com status por assento
-- **Polling ou SSE** no endpoint `GET /api/events/{id}/seats/stream` para atualização em tempo real do mapa (Redis Pub/Sub → SSE)
-- **Payload compacto** — o mapa de assentos retorna array simples `[{ code, status }]` para render eficiente do grid
+- Armazenar o `accessToken` em memória (`useState` / Zustand) — nunca em `localStorage` por segurança
+- Armazenar o `refreshToken` em cookie `HttpOnly` (configurado no backend) para renovação silenciosa
+- Enviar `Authorization: Bearer <accessToken>` em todas as requisições autenticadas
+- Interceptar respostas `401` para tentar `POST /api/auth/refresh` antes de redirecionar para login
 
 ```json
-// GET /api/events/42/seats
+// POST /api/auth/login — response
 {
-  "eventId": 42,
-  "eventName": "Hamlet",
-  "totalSeats": 80,
-  "availableSeats": 34,
-  "seats": [
-    { "id": 1, "code": "A1", "status": "R" },
-    { "id": 2, "code": "A2", "status": "D" },
-    { "id": 3, "code": "A3", "status": "M" }
-  ]
+  "accessToken":  "eyJhbG...",
+  "refreshToken": "eyJhbG...",
+  "userId": 42,
+  "role": "CUSTOMER"
+}
+
+// POST /api/bookings — body (sem dados pessoais, pois vêm do JWT)
+{
+  "eventId": 7,
+  "seatIds": [23, 24, 25]
 }
 ```
