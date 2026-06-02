@@ -14,6 +14,8 @@ services:
       THEATER_SERVICE_URL: http://theater-service:8081
       EVENT_SERVICE_URL: http://event-service:8082
       RESERVATION_SERVICE_URL: http://reservation-service:8083
+    env_file:
+      - .env
     depends_on:
       - auth-service
       - theater-service
@@ -28,8 +30,12 @@ services:
       - "8084"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
+      DB_USERNAME: root
+      DB_PASSWORD: root
       SPRING_REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET}
+    env_file:
+      - .env
     depends_on:
       - mysql
       - redis
@@ -43,6 +49,8 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
       SPRING_REDIS_HOST: redis
+    env_file:
+      - .env
     depends_on:
       - mysql
       - redis
@@ -56,6 +64,8 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
       SPRING_REDIS_HOST: redis
+    env_file:
+      - .env
     depends_on:
       - mysql
       - redis
@@ -69,6 +79,8 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
       SPRING_REDIS_HOST: redis
+    env_file:
+      - .env
     depends_on:
       - mysql
       - redis
