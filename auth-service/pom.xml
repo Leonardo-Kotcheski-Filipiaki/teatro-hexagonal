@@ -26,11 +26,6 @@
         <!-- JWT (JJWT) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.12.6</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>0.12.6</version>
             <scope>runtime</scope>
@@ -41,7 +36,11 @@
             <version>0.12.6</version>
             <scope>runtime</scope>
         </dependency>
-
+        <dependency>
+            <groupId>com.teatro</groupId>
+            <artifactId>shared-domain</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- Redis para refresh tokens -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
