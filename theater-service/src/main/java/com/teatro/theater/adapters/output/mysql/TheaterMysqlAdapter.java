@@ -7,6 +7,9 @@ import com.teatro.theater.domain.model.Theater;
 import com.teatro.theater.ports.output.TheaterRepositoryPort;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Optional;
+
 @Component
 public class TheaterMysqlAdapter implements TheaterRepositoryPort {
     private final SpringDataTheaterRepository repository;
@@ -20,5 +23,16 @@ public class TheaterMysqlAdapter implements TheaterRepositoryPort {
         TheaterEntity entity = TheaterMapper.toEntity(theater);
         TheaterEntity saved = repository.save(entity);
         return TheaterMapper.toDomain(saved);
+    }
+
+    @Override
+    public List<Theater> list() {
+        return repository.findAll().stream().map(TheaterMapper::toDomain).toList();
+    }
+
+    @Override
+    public Optional<Theater> listId(Long id) {
+        return repository.findById(id)
+                .map(TheaterMapper::toDomain);
     }
 }

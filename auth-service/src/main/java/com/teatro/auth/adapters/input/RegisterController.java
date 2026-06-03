@@ -4,7 +4,6 @@ import com.teatro.auth.adapters.input.dto.CreateUserRequest;
 import com.teatro.auth.adapters.input.dto.UserResponse;
 import com.teatro.auth.domain.model.User;
 import com.teatro.auth.ports.input.CreateUserCase;
-import io.jsonwebtoken.security.Password;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
