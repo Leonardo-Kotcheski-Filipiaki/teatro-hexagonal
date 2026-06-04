@@ -50,6 +50,5 @@ public class TheaterController {
     public ResponseEntity<TheaterResponse> listId(@PathVariable Long id) {
         Theater retorno = findTheaterByIdUseCase.execute(id);
         return ResponseEntity.ok(TheaterResponse.fromDomain(retorno));
-
     }
 }

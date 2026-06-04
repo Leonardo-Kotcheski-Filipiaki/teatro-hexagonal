@@ -1,3 +1,4 @@
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
 -- MySQL dump 10.13  Distrib 8.4.9, for Linux (x86_64)
 --
 -- Host: localhost    Database: theater_db
@@ -93,7 +94,7 @@ CREATE TABLE `event` (
   KEY `idx_event_theater` (`theater_id`),
   CONSTRAINT `fk_event_theater` FOREIGN KEY (`theater_id`) REFERENCES `theater` (`id`),
   CONSTRAINT `event_chk_1` CHECK ((`total_seats` <= 80))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -102,6 +103,7 @@ CREATE TABLE `event` (
 
 LOCK TABLES `event` WRITE;
 /*!40000 ALTER TABLE `event` DISABLE KEYS */;
+INSERT INTO `event` VALUES (1,1,'O Fantasma da Ópera - Estreia Nacional','2026-07-15 20:30:00',80,80,'ACTIVE','2026-06-04 01:49:11','2026-06-04 01:49:11'),(2,2,'Cronos - Tour de Despedida (Rock Nacional)','2026-09-05 21:00:00',60,60,'ACTIVE','2026-06-04 02:12:15','2026-06-04 02:12:15');
 /*!40000 ALTER TABLE `event` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -206,4 +208,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-03  2:07:41
+-- Dump completed on 2026-06-04  3:09:17

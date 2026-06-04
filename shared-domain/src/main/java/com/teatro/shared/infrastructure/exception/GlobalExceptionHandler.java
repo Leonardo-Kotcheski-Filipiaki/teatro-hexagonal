@@ -1,6 +1,5 @@
-package com.teatro.theater.adapters.input.exception;
+package com.teatro.shared.infrastructure.exception;
 
-import com.teatro.shared.infrastructure.exception.StandardError;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
