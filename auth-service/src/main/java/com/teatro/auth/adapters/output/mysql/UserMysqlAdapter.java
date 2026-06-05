@@ -7,6 +7,7 @@ import com.teatro.auth.domain.model.User;
 import com.teatro.auth.ports.output.UserRepositoryPort;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -34,5 +35,10 @@ public class UserMysqlAdapter implements UserRepositoryPort {
     @Override
     public Optional<User> findByEmail(String email) {
         return repository.findByEmail(email).map(UserMapper::toDomain);
+    }
+
+    @Override
+    public List<User> findAllUsers() {
+        return repository.findAll().stream().map(UserMapper::toDomain).toList();
     }
 }

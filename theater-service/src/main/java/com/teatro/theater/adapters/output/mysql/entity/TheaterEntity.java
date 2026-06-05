@@ -13,10 +13,10 @@ public class TheaterEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String address;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String city;
 
     @Column(nullable = false)

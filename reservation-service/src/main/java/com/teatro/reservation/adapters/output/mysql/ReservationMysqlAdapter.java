@@ -46,4 +46,18 @@ public class ReservationMysqlAdapter implements ReservationRepositoryPort {
                 .collect(Collectors.toList());
         seatRepository.saveAll(entities);
     }
+
+    @Override
+    public List<Booking> findUserSeats(Long eventId, Long userId) {
+        return bookingRepository.findByEventIdAndUserId(eventId, userId).stream()
+                .map(BookingMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Booking> findBookingsByUserId(Long userId) {
+        return bookingRepository.findByUserId(userId).stream()
+                .map(BookingMapper::toDomain)
+                .collect(Collectors.toList());
+    }
 }

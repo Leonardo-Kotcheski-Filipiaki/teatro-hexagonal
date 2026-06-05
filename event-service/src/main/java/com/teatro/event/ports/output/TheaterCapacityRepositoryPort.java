@@ -8,5 +8,5 @@ public interface TheaterCapacityRepositoryPort {
 
     Theater save(Theater theater);
 
-    Optional<Theater> list(Long theaterId);
+    Optional<Integer> getCapacity(Long theaterId);
 }

@@ -12,8 +12,11 @@ spring:
 
   data:
     redis:
-      host: redis
+      host: localhost
       port: 6379
+    cache:
+      type: redis
+      redis:time-to-live: 10m
 
   api:
     reservation:

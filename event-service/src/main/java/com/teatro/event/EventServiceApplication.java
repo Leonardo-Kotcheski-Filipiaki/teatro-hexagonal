@@ -2,9 +2,11 @@ package com.teatro.event;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 
+@EnableCaching
 @SpringBootApplication(scanBasePackages = {"com.teatro.event", "com.teatro.shared"})
-public class EventServieApplication {
+public class EventServiceApplication {
 
     public static void main(String[] args) {
         try {
@@ -26,7 +28,7 @@ public class EventServieApplication {
         } catch (java.io.IOException e) {
             System.err.println("Não foi possível carregar o arquivo .env centralizado: " + e.getMessage());
         }
-        SpringApplication.run(EventServieApplication.class, args);
+        SpringApplication.run(EventServiceApplication.class, args);
     }
 
 }

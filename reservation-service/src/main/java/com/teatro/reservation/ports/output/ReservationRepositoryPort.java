@@ -12,4 +12,8 @@ public interface ReservationRepositoryPort {
     Booking saveBooking(Booking booking);
 
     void saveAllSeats(List<Seat> seats);
+
+    List<Booking> findUserSeats(Long eventId, Long userId);
+
+    List<Booking> findBookingsByUserId(Long userId);
 }

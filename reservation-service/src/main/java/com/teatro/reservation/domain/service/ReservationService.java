@@ -3,13 +3,17 @@ package com.teatro.reservation.domain.service;
 import com.teatro.reservation.domain.model.Booking;
 import com.teatro.reservation.domain.model.Seat;
 import com.teatro.reservation.ports.input.BookingUseCase;
+import com.teatro.reservation.ports.input.FindAllUserReservedSeatsUseCase;
+import com.teatro.reservation.ports.input.FindUserReservedSeatsUseCase;
 import com.teatro.reservation.ports.input.InitializeSeatsUseCase;
 import com.teatro.reservation.ports.output.ReservationRepositoryPort;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-public class ReservationService implements BookingUseCase, InitializeSeatsUseCase {
+public class ReservationService implements BookingUseCase, InitializeSeatsUseCase, FindUserReservedSeatsUseCase, FindAllUserReservedSeatsUseCase {
 
     private final ReservationRepositoryPort repository;
 
@@ -33,8 +37,16 @@ public class ReservationService implements BookingUseCase, InitializeSeatsUseCas
             throw new IllegalArgumentException("Alguns assentos selecionados não pertencem a este evento.");
         }
 
-        seatsToReserve.forEach(Seat::occupy);
+        List<String> seatsOccupied = seatsToReserve.stream().map(Seat::occupy).filter(Objects::nonNull).toList();
 
+        if (!seatsOccupied.isEmpty()) {
+            if (seatsOccupied.size() > 1) {
+                throw new IllegalStateException("Os assentos " + String.join(", ", seatsOccupied) + " não estão disponiveis para reserva.");
+            } else {
+                throw new IllegalStateException("O assento " + seatsOccupied.getFirst() + " não está disponível para reserva.");
+            }
+
+        }
         Booking newBooking = new Booking(eventId, userId, seatIds);
 
         repository.saveAllSeats(seatsToReserve);
@@ -77,5 +89,33 @@ public class ReservationService implements BookingUseCase, InitializeSeatsUseCas
 
         // 3. Manda salvar tudo usando a porta de saída
         repository.saveAllSeats(listaGerada);
+    }
+
+    @Override
+    public List<Seat> execute(Long eventId, Long userId) {
+        List<Booking> bookings = repository.findUserSeats(eventId, userId);
+        List<Long> seatIds = bookings.stream()
+                .flatMap(booking -> booking.getSeatIds().stream())
+                .collect(Collectors.toList());
+
+        if (seatIds.isEmpty()) {
+            return List.of();
+        }
+
+        return repository.findSeatsByIds(seatIds);
+    }
+
+    @Override
+    public List<Seat> execute(Long userId) {
+        List<Booking> bookings = repository.findBookingsByUserId(userId);
+        List<Long> seatIds = bookings.stream()
+                .flatMap(booking -> booking.getSeatIds().stream())
+                .collect(Collectors.toList());
+
+        if (seatIds.isEmpty()) {
+            return List.of();
+        }
+
+        return repository.findSeatsByIds(seatIds);
     }
 }

@@ -5,10 +5,7 @@ import com.teatro.event.adapters.input.dto.EventResponse;
 import com.teatro.event.adapters.input.dto.TheaterSyncRequest;
 import com.teatro.event.domain.model.Event;
 import com.teatro.event.domain.model.Theater;
-import com.teatro.event.ports.input.CreateEventUseCase;
-import com.teatro.event.ports.input.FindAllEventUseCase;
-import com.teatro.event.ports.input.FindEventByIdUseCase;
-import com.teatro.event.ports.input.TheaterCapacitySyncUseCase;
+import com.teatro.event.ports.input.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +26,7 @@ public class EventController {
 
     private final TheaterCapacitySyncUseCase theaterCapacitySyncUseCase;
 
+
     public EventController(CreateEventUseCase createEventUseCase,
                            FindAllEventUseCase findAllEventUseCase,
                            FindEventByIdUseCase findEventByIdUseCase,
@@ -42,6 +40,7 @@ public class EventController {
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventResponse> create(@Valid @RequestBody CreateEventRequest request) {
+
         Event domain = new Event(request.theaterId(), request.name(), request.eventDate(), request.totalSeats());
         Event saved = createEventUseCase.execute(domain);
         return ResponseEntity.status(HttpStatus.CREATED).body(EventResponse.fromDomain(saved));

@@ -49,12 +49,14 @@ public class Seat {
         this.reservedAt = reservedAt;
     }
 
-    public void occupy() {
+    public String occupy() {
+        String seatOccupied = null;
         if (this.status != SeatStatus.D) {
-            throw new IllegalStateException("O assento " + this.seatCode + " não está disponível para reserva.");
+            seatOccupied = (this.seatCode);
+        } else {
+            this.status = SeatStatus.R;
+            this.reservedAt = LocalDateTime.now();
         }
-
-        this.status = SeatStatus.R;
-        this.reservedAt = LocalDateTime.now();
+        return seatOccupied;
     }
 }

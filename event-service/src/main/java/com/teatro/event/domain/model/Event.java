@@ -5,7 +5,6 @@ import com.teatro.shared.domain.enums.EventStatus;
 import java.time.LocalDateTime;
 
 public class Event {
-
     private Long id;
 
     private Long theaterId;
@@ -19,6 +18,8 @@ public class Event {
     private Integer availableSeats;
 
     private EventStatus status;
+
+    protected Event() {}
 
     public Long getId() {
         return id;

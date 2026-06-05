@@ -26,7 +26,7 @@ public class TheaterCapacityMysqlAdapter implements TheaterCapacityRepositoryPor
     }
 
     @Override
-    public Optional<Theater> list(Long theaterId) {
-        return repository.findById(theaterId).map(TheaterMapper::toDomain);
+    public Optional<Integer> getCapacity(Long theaterId) {
+        return repository.findById(theaterId).map(TheaterMapper::toDomain).map(Theater::getCapacity);
     }
 }
