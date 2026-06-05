@@ -15,6 +15,6 @@ public class FindEventByIdService implements FindEventByIdUseCase {
 
     @Override
     public Event execute(Long id) {
-        return eventRepositoryPort.listId(id).orElseThrow(() -> new IllegalArgumentException("Teatro com o ID " + id + " não foi encontrado."));
+        return eventRepositoryPort.listId(id).orElseThrow(() -> new IllegalArgumentException("Evento com o ID " + id + " não foi encontrado."));
     }
 }

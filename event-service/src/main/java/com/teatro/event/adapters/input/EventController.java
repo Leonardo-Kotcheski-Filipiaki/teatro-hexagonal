@@ -2,10 +2,13 @@ package com.teatro.event.adapters.input;
 
 import com.teatro.event.adapters.input.dto.CreateEventRequest;
 import com.teatro.event.adapters.input.dto.EventResponse;
+import com.teatro.event.adapters.input.dto.TheaterSyncRequest;
 import com.teatro.event.domain.model.Event;
+import com.teatro.event.domain.model.Theater;
 import com.teatro.event.ports.input.CreateEventUseCase;
 import com.teatro.event.ports.input.FindAllEventUseCase;
 import com.teatro.event.ports.input.FindEventByIdUseCase;
+import com.teatro.event.ports.input.TheaterCapacitySyncUseCase;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +27,16 @@ public class EventController {
 
     private final FindEventByIdUseCase findEventByIdUseCase;
 
+    private final TheaterCapacitySyncUseCase theaterCapacitySyncUseCase;
+
     public EventController(CreateEventUseCase createEventUseCase,
                            FindAllEventUseCase findAllEventUseCase,
-                           FindEventByIdUseCase findEventByIdUseCase) {
+                           FindEventByIdUseCase findEventByIdUseCase,
+                           TheaterCapacitySyncUseCase theaterCapacitySyncUseCase) {
         this.createEventUseCase = createEventUseCase;
         this.findAllEventUseCase = findAllEventUseCase;
         this.findEventByIdUseCase = findEventByIdUseCase;
+        this.theaterCapacitySyncUseCase = theaterCapacitySyncUseCase;
     }
 
     @PostMapping("/create")
@@ -50,5 +57,11 @@ public class EventController {
     public ResponseEntity<EventResponse> listId(@PathVariable Long id) {
         Event retorno = findEventByIdUseCase.execute(id);
         return ResponseEntity.ok(EventResponse.fromDomain(retorno));
+    }
+
+    @PostMapping("/internal/theater/sync/capacity")
+    public ResponseEntity<Void> syncTheater(@RequestBody TheaterSyncRequest request) {
+        theaterCapacitySyncUseCase.execute(new Theater(request.theaterId(), request.capacity()));
+        return ResponseEntity.ok().build();
     }
 }

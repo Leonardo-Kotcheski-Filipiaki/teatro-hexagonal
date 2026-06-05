@@ -1,4 +1,4 @@
-package com.teatro.event.infrastructure;
+package com.teatro.reservation.infrastructure;
 
 import com.teatro.shared.infrastructure.security.JwtSharedAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
@@ -23,11 +23,6 @@ public class SecurityConfig {
     }
 
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers("/api/event/internal/theater/sync/capacity");
-    }
-
-    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
@@ -38,4 +33,9 @@ public class SecurityConfig {
                 .addFilterBefore(jwtSharedAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers("/api/reservation/internal/seats/initialize");
+    }
+
 }
