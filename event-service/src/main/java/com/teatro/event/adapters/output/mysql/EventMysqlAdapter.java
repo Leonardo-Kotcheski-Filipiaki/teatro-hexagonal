@@ -5,6 +5,7 @@ import com.teatro.event.adapters.output.mysql.mapper.EventMapper;
 import com.teatro.event.adapters.output.mysql.repository.SpringDataEventRepository;
 import com.teatro.event.domain.model.Event;
 import com.teatro.event.ports.output.EventRepositoryPort;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -28,10 +29,12 @@ public class EventMysqlAdapter implements EventRepositoryPort {
     }
 
     @Override
+    @Cacheable(value = "event", key = "'all'")
     public List<Event> list() {
         return repository.findAll().stream().map(EventMapper::toDomain).toList();
     }
 
+    @Cacheable(value = "event", key = "#id")
     @Override
     public Optional<Event> listId(Long id) {
         return repository.findById(id)

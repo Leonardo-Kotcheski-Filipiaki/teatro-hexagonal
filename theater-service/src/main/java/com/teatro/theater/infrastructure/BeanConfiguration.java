@@ -3,6 +3,7 @@ package com.teatro.theater.infrastructure;
 import com.teatro.theater.domain.service.CreateTheaterService;
 import com.teatro.theater.domain.service.FindAllTheatersService;
 import com.teatro.theater.domain.service.FindTheaterByIdService;
+import com.teatro.theater.infrastructure.client.TheaterCapacityClient;
 import com.teatro.theater.ports.input.CreateTheaterUseCase;
 import com.teatro.theater.ports.input.FindAllTheatersUseCase;
 import com.teatro.theater.ports.input.FindTheaterByIdUseCase;
@@ -14,8 +15,8 @@ import org.springframework.context.annotation.Configuration;
 public class BeanConfiguration {
 
     @Bean
-    public CreateTheaterUseCase createTheaterUseCase(TheaterRepositoryPort theaterRepositoryPort) {
-        return new CreateTheaterService(theaterRepositoryPort);
+    public CreateTheaterUseCase createTheaterUseCase(TheaterRepositoryPort theaterRepositoryPort, TheaterCapacityClient theaterCapacityClient) {
+        return new CreateTheaterService(theaterRepositoryPort, theaterCapacityClient);
     }
 
     @Bean

@@ -2,6 +2,7 @@ package com.teatro.auth.adapters.input;
 
 import com.teatro.auth.adapters.input.dto.CreateUserRequest;
 import com.teatro.auth.adapters.input.dto.UserResponse;
+import com.teatro.auth.domain.model.Roles;
 import com.teatro.auth.domain.model.User;
 import com.teatro.auth.ports.input.CreateUserCase;
 import jakarta.validation.Valid;
@@ -27,11 +28,21 @@ public class RegisterController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @PostMapping("/register")
+    @PostMapping("/register/internal/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
         String passwordHash = passwordEncoder.encode(request.password());
+        User newUser = new User(request.name(), request.email(), passwordHash, request.role());
 
+        User savedUser = CreateUserCase.execute(newUser);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserResponse.fromDomain(savedUser));
+    }
+
+    @PostMapping("/register/customer")
+    public ResponseEntity<UserResponse> customer(@Valid @RequestBody CreateUserRequest request) {
+        if (request.role().equals(Roles.ADMIN)) throw new IllegalArgumentException("Esta rota deve registrar apenas clientes!");
+        String passwordHash = passwordEncoder.encode(request.password());
         User newUser = new User(request.name(), request.email(), passwordHash, request.role());
 
         User savedUser = CreateUserCase.execute(newUser);

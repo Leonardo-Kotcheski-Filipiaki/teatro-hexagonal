@@ -74,4 +74,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(error);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<StandardError> handleReservationFailure(IllegalStateException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.FORBIDDEN; // 403
+
+        StandardError error = new StandardError(
+                Instant.now(),
+                status.value(),
+                "Reserva não realizada",
+                e.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity.status(status).body(error);
+    }
+
 }
