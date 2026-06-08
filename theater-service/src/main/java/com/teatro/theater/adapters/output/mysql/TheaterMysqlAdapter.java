@@ -5,6 +5,7 @@ import com.teatro.theater.adapters.output.mysql.mapper.TheaterMapper;
 import com.teatro.theater.adapters.output.mysql.repository.SpringDataTheaterRepository;
 import com.teatro.theater.domain.model.Theater;
 import com.teatro.theater.ports.output.TheaterRepositoryPort;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,11 +27,15 @@ public class TheaterMysqlAdapter implements TheaterRepositoryPort {
     }
 
     @Override
+    @Cacheable(value = "theater", key = "'list'")
     public List<Theater> list() {
-        return repository.findAll().stream().map(TheaterMapper::toDomain).toList();
+        return repository.findAll().stream()
+                .map(TheaterMapper::toDomain)
+                .toList();
     }
 
     @Override
+    @Cacheable(value = "theater", key = "#id")
     public Optional<Theater> listId(Long id) {
         return repository.findById(id)
                 .map(TheaterMapper::toDomain);

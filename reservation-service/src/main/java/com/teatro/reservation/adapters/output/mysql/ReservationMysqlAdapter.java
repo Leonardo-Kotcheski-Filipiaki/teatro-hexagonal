@@ -8,6 +8,7 @@ import com.teatro.reservation.adapters.output.mysql.repository.SeatJpaRepository
 import com.teatro.reservation.domain.model.Booking;
 import com.teatro.reservation.domain.model.Seat;
 import com.teatro.reservation.ports.output.ReservationRepositoryPort;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -48,6 +49,7 @@ public class ReservationMysqlAdapter implements ReservationRepositoryPort {
     }
 
     @Override
+    @Cacheable(value = "bookings_user_event", key = "#userId")
     public List<Booking> findUserSeats(Long eventId, Long userId) {
         return bookingRepository.findByEventIdAndUserId(eventId, userId).stream()
                 .map(BookingMapper::toDomain)
@@ -55,9 +57,19 @@ public class ReservationMysqlAdapter implements ReservationRepositoryPort {
     }
 
     @Override
+    @Cacheable(value = "bookings_user", key = "#userId")
     public List<Booking> findBookingsByUserId(Long userId) {
         return bookingRepository.findByUserId(userId).stream()
                 .map(BookingMapper::toDomain)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Cacheable(value = "seats", key = "#eventId")
+    public List<Seat> findAllSeatsByEventId(Long eventId) {
+        return seatRepository.findAllByEventId(eventId).stream()
+                .map(SeatMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
 }

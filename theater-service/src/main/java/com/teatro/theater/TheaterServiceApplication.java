@@ -2,7 +2,9 @@ package com.teatro.theater;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 
+@EnableCaching
 @SpringBootApplication(scanBasePackages = {"com.teatro.theater", "com.teatro.shared"})
 public class TheaterServiceApplication {
     public static void main(String[] args) {

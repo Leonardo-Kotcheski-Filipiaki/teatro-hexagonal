@@ -29,12 +29,12 @@ public class EventMysqlAdapter implements EventRepositoryPort {
     }
 
     @Override
-    @Cacheable(value = "event", key = "'all'")
+    @Cacheable(value = "events", key = "'list'")
     public List<Event> list() {
         return repository.findAll().stream().map(EventMapper::toDomain).toList();
     }
 
-    @Cacheable(value = "event", key = "#id")
+    @Cacheable(value = "events", key = "#id")
     @Override
     public Optional<Event> listId(Long id) {
         return repository.findById(id)

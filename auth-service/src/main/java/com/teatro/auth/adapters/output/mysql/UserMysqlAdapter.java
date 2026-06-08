@@ -5,6 +5,7 @@ import com.teatro.auth.adapters.output.mysql.mapper.UserMapper;
 import com.teatro.auth.adapters.output.mysql.repository.SpringDataUserRepository;
 import com.teatro.auth.domain.model.User;
 import com.teatro.auth.ports.output.UserRepositoryPort;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public class UserMysqlAdapter implements UserRepositoryPort {
     }
 
     @Override
+    @Cacheable(value = "users", key = "'list'")
     public List<User> findAllUsers() {
         return repository.findAll().stream().map(UserMapper::toDomain).toList();
     }

@@ -35,6 +35,8 @@ public class Seat {
         return reservedAt;
     }
 
+    public Seat() {}
+
     public Seat(Long eventId, String seatCode) {
         this.eventId = eventId;
         this.seatCode = seatCode;
