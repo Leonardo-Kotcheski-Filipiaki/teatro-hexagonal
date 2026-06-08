@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +35,7 @@ public class TheaterController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<TheaterResponse> create(@Valid @RequestBody CreateTheaterRequest request) {
         Theater domain = new Theater(request.name(), request.address(), request.city(), request.capacity());
         Theater saved = createTheaterUseCase.execute(domain);

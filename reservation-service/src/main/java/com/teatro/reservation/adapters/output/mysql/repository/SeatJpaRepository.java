@@ -3,5 +3,8 @@ package com.teatro.reservation.adapters.output.mysql.repository;
 import com.teatro.reservation.adapters.output.mysql.entity.SeatEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface SeatJpaRepository extends JpaRepository<SeatEntity, Long> {
+    List<SeatEntity> findAllByEventId(Long eventId);
 }

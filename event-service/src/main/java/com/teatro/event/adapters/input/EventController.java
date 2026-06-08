@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,6 +40,7 @@ public class EventController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<EventResponse> create(@Valid @RequestBody CreateEventRequest request) {
 
         Event domain = new Event(request.theaterId(), request.name(), request.eventDate(), request.totalSeats());

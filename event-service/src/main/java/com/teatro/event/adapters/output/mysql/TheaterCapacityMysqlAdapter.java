@@ -5,9 +5,9 @@ import com.teatro.event.adapters.output.mysql.mapper.TheaterMapper;
 import com.teatro.event.adapters.output.mysql.repository.SpringDataTheaterCapacityRepository;
 import com.teatro.event.domain.model.Theater;
 import com.teatro.event.ports.output.TheaterCapacityRepositoryPort;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
 
 @Component
 public class TheaterCapacityMysqlAdapter implements TheaterCapacityRepositoryPort {
@@ -26,7 +26,8 @@ public class TheaterCapacityMysqlAdapter implements TheaterCapacityRepositoryPor
     }
 
     @Override
-    public Optional<Integer> getCapacity(Long theaterId) {
-        return repository.findById(theaterId).map(TheaterMapper::toDomain).map(Theater::getCapacity);
+    @Cacheable(value = "theater_capacity", key = "#theaterId")
+    public Theater getCapacity(Long theaterId) {
+        return repository.findById(theaterId).map(TheaterMapper::toDomain).orElseThrow(() -> new IllegalArgumentException("Teatro não encontrado!"));
     }
 }

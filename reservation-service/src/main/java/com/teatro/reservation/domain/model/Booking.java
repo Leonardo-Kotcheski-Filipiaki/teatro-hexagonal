@@ -42,6 +42,8 @@ public class Booking {
         return seatIds;
     }
 
+    public Booking() {}
+
     public Booking(Long eventId, Long userId, List<Long> seatIds) {
         this.eventId = eventId;
         this.userId = userId;

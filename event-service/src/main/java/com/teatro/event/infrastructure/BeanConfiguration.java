@@ -1,10 +1,10 @@
 package com.teatro.event.infrastructure;
 
 import com.teatro.event.domain.service.*;
-import com.teatro.event.infrastructure.client.ReservationClient;
 import com.teatro.event.ports.input.*;
 import com.teatro.event.ports.output.EventRepositoryPort;
 import com.teatro.event.ports.output.TheaterCapacityRepositoryPort;
+import com.teatro.shared.domain.event.DomainEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,9 +13,9 @@ public class BeanConfiguration {
 
     @Bean
     public CreateEventUseCase createEventUseCase(EventRepositoryPort eventRepositoryPort,
-                                                 ReservationClient reservationClient,
-                                                 TheaterCapacityRepositoryPort theaterCapacityRepositoryPort) {
-        return new CreateEventService(eventRepositoryPort, reservationClient, theaterCapacityRepositoryPort);
+                                                 TheaterCapacityRepositoryPort theaterCapacityRepositoryPort,
+                                                 DomainEventPublisher eventPublisher) {
+        return new CreateEventService(eventRepositoryPort, theaterCapacityRepositoryPort, eventPublisher);
     }
 
     @Bean

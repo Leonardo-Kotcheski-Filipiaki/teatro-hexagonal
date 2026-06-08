@@ -12,6 +12,8 @@ public class Theater {
         return capacity;
     }
 
+    public Theater() {}
+
     public Theater(Long theaterId, Integer capacity) {
         this.theaterId = theaterId;
         this.capacity = capacity;
