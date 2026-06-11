@@ -32,6 +32,8 @@ public class Theater {
         return capacity;
     }
 
+    public Theater() {}
+
     public Theater(String name, String address, String city, Integer capacity) {
         this.name = name;
         this.address = address;

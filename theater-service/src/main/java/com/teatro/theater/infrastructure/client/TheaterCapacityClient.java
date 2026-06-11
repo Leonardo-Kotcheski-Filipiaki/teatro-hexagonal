@@ -9,7 +9,7 @@ import org.springframework.web.client.RestClient;
 public class TheaterCapacityClient {
     private final RestClient restClient;
 
-    public TheaterCapacityClient(@Value("${api.reservation.url:http://localhost:8082}") String baseUrl) {
+    public TheaterCapacityClient(@Value("${api.event.url:http://localhost:8082}") String baseUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();
