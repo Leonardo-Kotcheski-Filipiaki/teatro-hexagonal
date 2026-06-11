@@ -2,27 +2,31 @@ version: '3.9'
 
 services:
 
-  api-gateway:
-    build:
-      context: .
-      dockerfile: api-gateway/Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      JWT_SECRET: ${JWT_SECRET}
-      AUTH_SERVICE_URL: http://auth-service:8084
-      THEATER_SERVICE_URL: http://theater-service:8081
-      EVENT_SERVICE_URL: http://event-service:8082
-      RESERVATION_SERVICE_URL: http://reservation-service:8083
-    env_file:
-      - .env
-    depends_on:
-      - auth-service
-      - theater-service
-      - event-service
-      - reservation-service
+#  api-gateway:
+#    build:
+#      context: .
+#      dockerfile: api-gateway/Dockerfile
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      JWT_SECRET: ${JWT_SECRET}
+#      AUTH_SERVICE_URL: http://auth-service:8084
+#      THEATER_SERVICE_URL: http://theater-service:8081
+#      EVENT_SERVICE_URL: http://event-service:8082
+#      RESERVATION_SERVICE_URL: http://reservation-service:8083
+#    env_file:
+#      - .env
+#    depends_on:
+#      - auth-service
+#      - theater-service
+#      - event-service
+#      - reservation-service
 
   auth-service:
+    image: teatro-auth-service
+    container_name: auth
+    ports:
+      - "8084:8084"
     build:
       context: .
       dockerfile: auth-service/Dockerfile
@@ -32,7 +36,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
       DB_USERNAME: root
       DB_PASSWORD: root
-      SPRING_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET}
     env_file:
       - .env
@@ -41,6 +45,10 @@ services:
       - redis
 
   theater-service:
+    image: teatro-theater-service
+    container_name: theater
+    ports:
+      - "8081:8081"
     build:
       context: .
       dockerfile: theater-service/Dockerfile
@@ -48,7 +56,8 @@ services:
       - "8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
-      SPRING_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: redis
+      EVENT_SERVICE_URL: http://event:8082/
     env_file:
       - .env
     depends_on:
@@ -56,6 +65,10 @@ services:
       - redis
 
   event-service:
+    image: teatro-event-service
+    container_name: event
+    ports:
+      - "8082:8082"
     build:
       context: .
       dockerfile: event-service/Dockerfile
@@ -63,7 +76,8 @@ services:
       - "8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
-      SPRING_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: redis
+      RESERVATION_SERVICE_URL: http://reservation:8083/
     env_file:
       - .env
     depends_on:
@@ -71,6 +85,10 @@ services:
       - redis
 
   reservation-service:
+    image: teatro-reservation-service
+    container_name: reservation
+    ports:
+      - "8083:8083"
     build:
       context: .
       dockerfile: reservation-service/Dockerfile
@@ -78,7 +96,7 @@ services:
       - "8083"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theater_db
-      SPRING_REDIS_HOST: redis
+      SPRING_DATA_REDIS_HOST: redis
     env_file:
       - .env
     depends_on:
