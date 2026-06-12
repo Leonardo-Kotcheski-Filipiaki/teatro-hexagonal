@@ -6,7 +6,7 @@ import com.teatro.event.domain.model.Theater;
 import com.teatro.event.ports.input.CreateEventUseCase;
 import com.teatro.event.ports.output.EventRepositoryPort;
 import com.teatro.event.ports.output.TheaterCapacityRepositoryPort;
-import com.teatro.shared.domain.event.CacheActionEvent;
+import com.teatro.shared.infrastructure.cache.CacheActionEvent;
 import com.teatro.shared.domain.event.DomainEventPublisher;
 
 public class CreateEventService implements CreateEventUseCase {

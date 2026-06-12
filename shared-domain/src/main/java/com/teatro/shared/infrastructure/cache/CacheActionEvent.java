@@ -1,4 +1,6 @@
-package com.teatro.shared.domain.event;
+package com.teatro.shared.infrastructure.cache;
+
+import com.teatro.shared.domain.event.DomainEvent;
 
 public record CacheActionEvent(
         String cacheName,

@@ -1,5 +1,7 @@
 package com.teatro.auth.domain.model;
 
+import com.teatro.shared.domain.enums.Role;
+
 public class User {
 
     private Long id;
@@ -10,7 +12,7 @@ public class User {
 
     private String passwordhash;
 
-    private Roles role;
+    private Role role;
 
     private boolean active = true;
 
@@ -30,7 +32,7 @@ public class User {
         return passwordhash;
     }
 
-    public Roles getRole() {
+    public Role getRole() {
         return role;
     }
 
@@ -46,15 +48,15 @@ public class User {
         this.active = true;
     }
 
-    public User(String name, String email, String passwordHash, Roles role) {
+    public User(String name, String email, String passwordHash, Role role) {
         this.name = name;
         this.email = email;
         this.passwordhash = passwordHash;
         this.role = role;
-        this.active = true; // Todo usuário novo começa ativo
+        this.active = true;
     }
 
-    public User(Long id, String name, String email, String passwordHash, Roles role, boolean active) {
+    public User(Long id, String name, String email, String passwordHash, Role role, boolean active) {
         this.id = id;
         this.name = name;
         this.email = email;

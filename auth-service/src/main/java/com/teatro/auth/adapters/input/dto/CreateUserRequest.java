@@ -1,6 +1,6 @@
 package com.teatro.auth.adapters.input.dto;
 
-import com.teatro.auth.domain.model.Roles;
+import com.teatro.shared.domain.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +21,6 @@ public record CreateUserRequest(
         String password,
 
         @NotNull(message = "A role do usuário é obrigatória.")
-        Roles role
+        Role role
 
 ) {}

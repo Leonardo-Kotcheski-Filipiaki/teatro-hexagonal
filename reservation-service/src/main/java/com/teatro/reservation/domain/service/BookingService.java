@@ -4,7 +4,7 @@ import com.teatro.reservation.domain.model.Booking;
 import com.teatro.reservation.domain.model.Seat;
 import com.teatro.reservation.ports.input.BookingUseCase;
 import com.teatro.reservation.ports.output.ReservationRepositoryPort;
-import com.teatro.shared.domain.event.CacheActionEvent;
+import com.teatro.shared.infrastructure.cache.CacheActionEvent;
 import com.teatro.shared.domain.event.DomainEventPublisher;
 
 import java.util.List;

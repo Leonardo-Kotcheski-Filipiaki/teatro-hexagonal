@@ -1,4 +1,4 @@
-package com.teatro.shared.infrastructure;
+package com.teatro.shared.infrastructure.cache;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;

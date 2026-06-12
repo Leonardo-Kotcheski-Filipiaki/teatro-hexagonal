@@ -1,5 +1,6 @@
 package com.teatro.auth.domain.service;
 
+import com.teatro.auth.adapters.input.dto.LoginResponse;
 import com.teatro.auth.domain.model.User;
 import com.teatro.auth.ports.input.LoginUseCase;
 import com.teatro.auth.ports.output.PasswordEncryptionPort;
@@ -21,7 +22,7 @@ public class LoginService implements LoginUseCase {
     }
 
     @Override
-    public String execute(String email, String password) {
+    public LoginResponse execute(String email, String password) {
         User user = userRepositoryPort.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Email ou senha inválidos."));
         if (!user.isActive()) {
@@ -32,6 +33,6 @@ public class LoginService implements LoginUseCase {
             throw new IllegalArgumentException("Usuário ou senha inválidos.");
         }
 
-        return tokenServicePort.generateToken(user);
+        return new LoginResponse(tokenServicePort.generateToken(user), user.getId(), user.getName(), user.getRole());
     }
 }

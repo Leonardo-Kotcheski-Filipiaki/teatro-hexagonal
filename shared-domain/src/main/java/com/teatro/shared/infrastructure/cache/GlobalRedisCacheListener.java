@@ -1,6 +1,5 @@
 package com.teatro.shared.infrastructure.cache;
 
-import com.teatro.shared.domain.event.CacheActionEvent;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;

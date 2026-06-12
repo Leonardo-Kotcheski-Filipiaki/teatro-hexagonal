@@ -1,7 +1,7 @@
 package com.teatro.auth.adapters.output.mysql.entity;
 
+import com.teatro.shared.domain.enums.Role;
 import jakarta.persistence.*;
-import com.teatro.auth.domain.model.Roles;
 
 @Entity
 @Table(name = "user")
@@ -22,7 +22,7 @@ public class UserEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Roles role = Roles.CUSTOMER;
+    private Role role = Role.CUSTOMER;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -61,11 +61,11 @@ public class UserEntity {
         this.passwordHash = passwordHash;
     }
 
-    public Roles getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(Roles role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
@@ -77,7 +77,7 @@ public class UserEntity {
         this.active = active;
     }
 
-    public static UserEntity create(String name, String email, String passwordHash, Roles role) {
+    public static UserEntity create(String name, String email, String passwordHash, Role role) {
         UserEntity u = new UserEntity();
         u.name = name;
         u.email = email;

@@ -1,6 +1,6 @@
 package com.teatro.theater.domain.service;
 
-import com.teatro.shared.domain.event.CacheActionEvent;
+import com.teatro.shared.infrastructure.cache.CacheActionEvent;
 import com.teatro.shared.domain.event.DomainEventPublisher;
 import com.teatro.theater.domain.event.EventTheaterCreated;
 import com.teatro.theater.domain.model.Theater;

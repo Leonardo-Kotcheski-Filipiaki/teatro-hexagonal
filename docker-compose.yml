@@ -2,31 +2,31 @@ version: '3.9'
 
 services:
 
-#  api-gateway:
-#    build:
-#      context: .
-#      dockerfile: api-gateway/Dockerfile
-#    ports:
-#      - "8080:8080"
-#    environment:
-#      JWT_SECRET: ${JWT_SECRET}
-#      AUTH_SERVICE_URL: http://auth-service:8084
-#      THEATER_SERVICE_URL: http://theater-service:8081
-#      EVENT_SERVICE_URL: http://event-service:8082
-#      RESERVATION_SERVICE_URL: http://reservation-service:8083
-#    env_file:
-#      - .env
-#    depends_on:
-#      - auth-service
-#      - theater-service
-#      - event-service
-#      - reservation-service
+  api-gateway:
+    image: teatro-gateway-service
+    container_name: gateway
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      AUTH_SERVICE_URL: http://auth-service:8084
+      THEATER_SERVICE_URL: http://theater-service:8081
+      EVENT_SERVICE_URL: http://event-service:8082
+      RESERVATION_SERVICE_URL: http://reservation-service:8083
+    env_file:
+      - .env
+    depends_on:
+      - auth-service
+      - theater-service
+      - event-service
+      - reservation-service
 
   auth-service:
     image: teatro-auth-service
     container_name: auth
-    ports:
-      - "8084:8084"
     build:
       context: .
       dockerfile: auth-service/Dockerfile
@@ -47,8 +47,6 @@ services:
   theater-service:
     image: teatro-theater-service
     container_name: theater
-    ports:
-      - "8081:8081"
     build:
       context: .
       dockerfile: theater-service/Dockerfile
@@ -67,8 +65,6 @@ services:
   event-service:
     image: teatro-event-service
     container_name: event
-    ports:
-      - "8082:8082"
     build:
       context: .
       dockerfile: event-service/Dockerfile
@@ -87,8 +83,6 @@ services:
   reservation-service:
     image: teatro-reservation-service
     container_name: reservation
-    ports:
-      - "8083:8083"
     build:
       context: .
       dockerfile: reservation-service/Dockerfile

@@ -1,5 +1,7 @@
 package com.teatro.auth.ports.input;
 
+import com.teatro.auth.adapters.input.dto.LoginResponse;
+
 public interface LoginUseCase {
-    String execute(String email, String password);
+    LoginResponse execute(String email, String password);
 }
