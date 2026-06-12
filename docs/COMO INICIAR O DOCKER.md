@@ -29,4 +29,13 @@
   docker compose down
   ```
 
+## Passo 4: Subir o dump do banco
+ Em um terminal na pasta raiz do projeto e utilize o comando:
+  ```bash
+  docker exec -i nome-do-container mysql -uroot -proot theater_db < sql/dump.sql
+  ```
++Provavelmente o nome do container é teatro-hexagonal-mysql-1, mas confira utilizando:
+  ```bash
+  docker ps
+  ```
 ### Consulte o API_ROUTES.md para mais informações das rotas.
