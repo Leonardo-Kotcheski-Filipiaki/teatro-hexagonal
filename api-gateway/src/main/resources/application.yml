@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+services:
+  auth:
+    url: ${AUTH_SERVICE_URL:http://localhost:8084}
+  theater:
+    url: ${THEATER_SERVICE_URL:http://localhost:8081}
+  event:
+    url: ${EVENT_SERVICE_URL:http://localhost:8082}
+  reservation:
+    url: ${RESERVATION_SERVICE_URL:http://localhost:8083}
+
+jwt:
+  secret: ${JWT_SECRET}
