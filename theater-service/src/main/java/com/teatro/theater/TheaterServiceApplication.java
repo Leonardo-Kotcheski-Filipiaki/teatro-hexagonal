@@ -9,10 +9,9 @@ import org.springframework.cache.annotation.EnableCaching;
 public class TheaterServiceApplication {
     public static void main(String[] args) {
         try {
-            // Tenta ler na pasta atual, se não achar, tenta ler na pasta de cima (raiz do monorepo)
             java.nio.file.Path envPath = java.nio.file.Paths.get(".env");
             if (!java.nio.file.Files.exists(envPath)) {
-                envPath = java.nio.file.Paths.get("../.env"); // Sobe um nível
+                envPath = java.nio.file.Paths.get("../.env");
             }
 
             if (java.nio.file.Files.exists(envPath)) {

@@ -25,7 +25,7 @@ public class ReservationClient {
                     .toBodilessEntity();
             System.out.println("Chamada efetuada!");
         } catch (Exception e) {
-            throw new RuntimeException("Falha ao integrar com reservation-service para criar assetons", e);
+            throw new RuntimeException("Falha ao integrar com reservation-service para criar assentos", e);
         }
     }
 }

@@ -24,7 +24,7 @@ public class TheaterCapacityClient {
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
-            throw new RuntimeException("Falha ao integrar com reservation-service para criar assetons", e);
+            throw new RuntimeException("Falha ao integrar com event-service para sincronizar assentos existentes", e);
         }
     }
 }

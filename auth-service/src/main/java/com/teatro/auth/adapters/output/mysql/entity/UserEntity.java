@@ -24,9 +24,6 @@ public class UserEntity {
     @Column(nullable = false)
     private Role role = Role.CUSTOMER;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     public UserEntity() {}
 
     public Long getId() {
@@ -69,13 +66,6 @@ public class UserEntity {
         this.role = role;
     }
 
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
 
     public static UserEntity create(String name, String email, String passwordHash, Role role) {
         UserEntity u = new UserEntity();
@@ -83,7 +73,6 @@ public class UserEntity {
         u.email = email;
         u.passwordHash = passwordHash;
         u.role = role;
-        u.active = true;
         return u;
     }
 }

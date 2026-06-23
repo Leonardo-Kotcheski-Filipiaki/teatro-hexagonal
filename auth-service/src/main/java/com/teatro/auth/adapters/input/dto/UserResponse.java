@@ -8,11 +8,10 @@ public record UserResponse(
         Long id,
         String name,
         String email,
-        Role role,
-        boolean active
+        Role role
 
 ) {
     public static UserResponse fromDomain(User user) {
-        return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getRole(), user.isActive());
+        return new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
     }
 }

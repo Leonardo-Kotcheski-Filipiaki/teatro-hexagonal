@@ -5,11 +5,9 @@ import com.teatro.reservation.domain.model.Seat;
 
 public class SeatMapper {
 
-    // 🔄 BANCO ➡️ DOMÍNIO
     public static Seat toDomain(SeatEntity entity) {
         if (entity == null) return null;
 
-        // Usa o construtor completo do seu modelo de domínio Seat
         return new Seat(
                 entity.getId(),
                 entity.getEventId(),
@@ -19,7 +17,6 @@ public class SeatMapper {
         );
     }
 
-    // 🔄 DOMÍNIO ➡️ BANCO
     public static SeatEntity toEntity(Seat domain) {
         if (domain == null) return null;
 

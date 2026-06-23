@@ -20,7 +20,7 @@ spring:
 
 api:
   reservation:
-    url: ${RESERVATION_SERVICE_URL:http://localhost:8083}
+    url: ${RESERVATION_SERVICE_URL:http://localhost:8083/}
 
 server:
   port: 8082

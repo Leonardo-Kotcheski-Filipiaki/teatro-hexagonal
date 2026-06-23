@@ -13,8 +13,7 @@ public class UserMapper {
                 entity.getName(),
                 entity.getEmail(),
                 entity.getPasswordHash(),
-                entity.getRole(),
-                entity.isActive()
+                entity.getRole()
         );
     }
 
@@ -27,7 +26,6 @@ public class UserMapper {
         entity.setEmail(domain.getEmail());
         entity.setPasswordHash(domain.getPasswordhash());
         entity.setRole(domain.getRole());
-        entity.setActive(domain.isActive());
         return entity;
     }
 }

@@ -29,9 +29,9 @@ public class BookingEntity {
 
     @ManyToMany
     @JoinTable(
-            name = "booking_seat", // Nome da tabela associativa do seu script
-            joinColumns = @JoinColumn(name = "booking_id"), // FK para esta tabela (Booking)
-            inverseJoinColumns = @JoinColumn(name = "seat_id") // FK para a tabela de Seat
+            name = "booking_seat",
+            joinColumns = @JoinColumn(name = "booking_id"),
+            inverseJoinColumns = @JoinColumn(name = "seat_id")
     )
     private List<SeatEntity> seats;
 

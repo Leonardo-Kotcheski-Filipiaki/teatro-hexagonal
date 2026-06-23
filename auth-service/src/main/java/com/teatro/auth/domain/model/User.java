@@ -14,7 +14,7 @@ public class User {
 
     private Role role;
 
-    private boolean active = true;
+    public User(){}
 
     public Long getId() {
         return id;
@@ -36,32 +36,18 @@ public class User {
         return role;
     }
 
-    public boolean isActive() {
-        return active;
-    }
-
-    public void desativar() {
-        this.active = false;
-    }
-
-    public void ativar() {
-        this.active = true;
-    }
-
     public User(String name, String email, String passwordHash, Role role) {
         this.name = name;
         this.email = email;
         this.passwordhash = passwordHash;
         this.role = role;
-        this.active = true;
     }
 
-    public User(Long id, String name, String email, String passwordHash, Role role, boolean active) {
+    public User(Long id, String name, String email, String passwordHash, Role role) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.passwordhash = passwordHash;
         this.role = role;
-        this.active = active;
     }
 }

@@ -25,9 +25,6 @@ public class LoginService implements LoginUseCase {
     public LoginResponse execute(String email, String password) {
         User user = userRepositoryPort.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Email ou senha inválidos."));
-        if (!user.isActive()) {
-            throw new IllegalStateException("Esta conta está desativada.");
-        }
 
         if (!passwordEncryptionPort.matches(password, user.getPasswordhash())) {
             throw new IllegalArgumentException("Usuário ou senha inválidos.");
