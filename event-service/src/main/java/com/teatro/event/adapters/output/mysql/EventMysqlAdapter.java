@@ -5,6 +5,7 @@ import com.teatro.event.adapters.output.mysql.mapper.EventMapper;
 import com.teatro.event.adapters.output.mysql.repository.SpringDataEventRepository;
 import com.teatro.event.domain.model.Event;
 import com.teatro.event.ports.output.EventRepositoryPort;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class EventMysqlAdapter implements EventRepositoryPort {
 
 
     @Override
+    @CacheEvict(value = "events", key = "'list'")
     public Event save(Event event) {
         EventEntity entity = EventMapper.toEntity(event);
         EventEntity saved = repository.save(entity);

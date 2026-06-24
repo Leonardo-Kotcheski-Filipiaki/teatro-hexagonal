@@ -5,6 +5,7 @@ import com.teatro.theater.adapters.output.mysql.mapper.TheaterMapper;
 import com.teatro.theater.adapters.output.mysql.repository.SpringDataTheaterRepository;
 import com.teatro.theater.domain.model.Theater;
 import com.teatro.theater.ports.output.TheaterRepositoryPort;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class TheaterMysqlAdapter implements TheaterRepositoryPort {
     }
 
     @Override
+    @CacheEvict(value = "theater", key = "'list'")
     public Theater save(Theater theater) {
         TheaterEntity entity = TheaterMapper.toEntity(theater);
         TheaterEntity saved = repository.save(entity);

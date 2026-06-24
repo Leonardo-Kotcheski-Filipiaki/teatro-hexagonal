@@ -91,8 +91,7 @@ CREATE TABLE `event` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_event_theater` (`theater_id`),
-  CONSTRAINT `fk_event_theater` FOREIGN KEY (`theater_id`) REFERENCES `theater` (`id`),
-  CONSTRAINT `event_chk_1` CHECK ((`total_seats` <= 80))
+  CONSTRAINT `fk_event_theater` FOREIGN KEY (`theater_id`) REFERENCES `theater` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

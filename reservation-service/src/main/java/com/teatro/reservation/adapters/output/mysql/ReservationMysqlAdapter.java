@@ -8,6 +8,7 @@ import com.teatro.reservation.adapters.output.mysql.repository.SeatJpaRepository
 import com.teatro.reservation.domain.model.Booking;
 import com.teatro.reservation.domain.model.Seat;
 import com.teatro.reservation.ports.output.ReservationRepositoryPort;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +42,7 @@ public class ReservationMysqlAdapter implements ReservationRepositoryPort {
     }
 
     @Override
+    @CacheEvict(value = "seats", allEntries = true)
     public void saveAllSeats(List<Seat> seats) {
         var entities = seats.stream()
                 .map(SeatMapper::toEntity)

@@ -5,6 +5,7 @@ import com.teatro.auth.adapters.output.mysql.mapper.UserMapper;
 import com.teatro.auth.adapters.output.mysql.repository.SpringDataUserRepository;
 import com.teatro.auth.domain.model.User;
 import com.teatro.auth.ports.output.UserRepositoryPort;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ public class UserMysqlAdapter implements UserRepositoryPort {
 
 
     @Override
+    @CacheEvict(value = "users", key = "'list'")
     public User save(User user) {
         UserEntity entity = UserMapper.toEntity(user);
         UserEntity savedEntity = repository.save(entity);
