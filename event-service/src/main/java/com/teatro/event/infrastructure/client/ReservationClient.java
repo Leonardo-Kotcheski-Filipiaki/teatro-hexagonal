@@ -9,7 +9,7 @@ import org.springframework.web.client.RestClient;
 public class ReservationClient {
     private final RestClient restClient;
 
-    public ReservationClient(@Value("${api.reservation.url:http://localhost:8083}") String baseUrl) {
+    public ReservationClient(@Value("${api.reservation.url:http://localhost:8083/}") String baseUrl) {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();

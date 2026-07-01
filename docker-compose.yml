@@ -4,7 +4,6 @@ services:
 
   api-gateway:
     image: teatro-gateway-service
-    container_name: gateway
     build:
       context: .
       dockerfile: api-gateway/Dockerfile
@@ -26,7 +25,6 @@ services:
 
   auth-service:
     image: teatro-auth-service
-    container_name: auth
     build:
       context: .
       dockerfile: auth-service/Dockerfile
@@ -77,7 +75,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-root}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-root}
       SPRING_DATA_REDIS_HOST: redis
-      RESERVATION_SERVICE_URL: http://reservation:8083/
+      RESERVATION_SERVICE_URL: http://reservation-service:8083/
     env_file:
       - .env
     depends_on:
@@ -86,7 +84,6 @@ services:
 
   reservation-service:
     image: teatro-reservation-service
-    container_name: reservation
     build:
       context: .
       dockerfile: reservation-service/Dockerfile
